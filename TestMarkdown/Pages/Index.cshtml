@@ -4,7 +4,44 @@
     ViewData["Title"] = "Home page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container-fluid h-100 d-flex flex-column">
+    <div class="row">
+        <div class="col">
+            Source
+        </div>
+        <div class="col">
+            Markdown
+        </div>
+    </div>
+    <div class="row flex-fill">
+        <div class="col h-100">
+            <textarea id="md-source" class="form-control h-100" style="resize: none;">@Model.Source</textarea>
+        </div>
+        <div id="md-html" class="col h-100">
+            @Html.Raw(Model.MarkdownHtml)
+        </div>
+    </div>
+    <div id="anti-forgery" class="invisible">
+        @Html.AntiForgeryToken()
+    </div>
 </div>
+@section scripts
+{
+    <script>
+
+        $(function ()
+        {
+            async function updateMarkdown()
+            {
+                var headers = new Headers();
+                headers.append('RequestVerificationToken', $('#anti-forgery > input[name="__RequestVerificationToken"]').val());
+                var body = new FormData();
+                body.append('source', $('#md-source').val());
+                var markdown = await fetch('/Index?handler=Markdown', { method: 'POST', headers: headers, body: body, });
+                $('#md-html').html(await markdown.text());
+            }
+
+            $('#md-source').on('input propertychange', throttle(100, updateMarkdown));
+        });
+    </script>
+}
